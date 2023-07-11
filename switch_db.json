@@ -1,0 +1,15 @@
+{
+    "routers": [],
+    "switches": [
+        {
+            "cumm111": [
+                {
+                    "cdp_neighbors": "cumm112",
+                    "device_type": "",
+                    "ip_address": "",
+                    "mac_address": ""
+                }
+            ]
+        }
+    ]
+}
