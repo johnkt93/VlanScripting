@@ -4,7 +4,6 @@ import paramiko
 import sys
 import os
 from getpass import getpass
-from NewVlanRouter import *
 
 jumpbox = paramiko.SSHClient()
 #If the host key does not exist in our system, we will add it
@@ -32,7 +31,7 @@ src_addr = (ip_address, 22)
 target=paramiko.SSHClient()
 target.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-def connect(device,password=password):
+def connect(device,username=username,password=password):
     try:
         dest_addr = (device, 22)
         jumpbox_channel = jumpbox_transport.open_channel("direct-tcpip", dest_addr, src_addr)
