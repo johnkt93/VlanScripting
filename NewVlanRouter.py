@@ -41,7 +41,8 @@ def file_exists(file_name):
 #    connect(device=switch_var.get(),username=username_var.get(), password=password_var.get())
 
 def new_window():
-    new_window = tk.Toplevel(window)
+    window.destroy()
+    new_window = tk.Tk()
     new_window.title("VLAN Creation Tool")
 
     global change_number_var
@@ -119,6 +120,7 @@ def new_window():
 
     cancel_button = tk.Button(button_frame, text = "Cancel", command=new_window.destroy)
     cancel_button.pack(side=tk.RIGHT, padx=10, pady=5)
+    new_window.mainloop()
 
 username_var = tk.StringVar
 username_label = tk.Label(window, text="Enter your username")
