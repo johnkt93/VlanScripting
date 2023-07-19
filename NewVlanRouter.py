@@ -2,7 +2,7 @@ import tkinter as tk
 import json
 from threading import Thread
 from import_json import *
-#from ParamikoSSH import *
+from ParamikoSSH import *
 from tkinter import messagebox
 
 window = tk.Tk()
@@ -18,7 +18,7 @@ def confirm_command():
     #switch_ssh()
     file_creation()
     switch_db()
-    #add_switch(switch_var, "", "", "", "")
+    #add_switch(switch_var.get(), cdp_neighbors, device_type, ip_address, mac_address)
 
 def check_switch():
     messagebox.showerror("Oops","Nope, doesn't do anything yet.\n\nTo be programmed.")
@@ -37,8 +37,8 @@ def file_exists(file_name):
             return True
     except FileNotFoundError:
         return False
-#def switch_ssh():
-#    connect(device=switch_var.get(),username=username_var.get(), password=password_var.get())
+def switch_ssh():
+    connect(device=switch_var.get(),username=username_var.get(), password=password_var.get())
 
 def new_window():
     window.destroy()
@@ -46,6 +46,8 @@ def new_window():
     new_window.title("VLAN Creation Tool")
 
     global change_number_var
+    global router_var
+    global switch_var
     global vlan_number_var
     global vlan_name_var
     global vlan_description_var

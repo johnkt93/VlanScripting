@@ -11,7 +11,7 @@ def switch_db():
 
     return data
 
-def add_switch(switch="", cdp_neighbors="", device_type="", ip_address="", mac_address=""):
+def add_switch(switch, cdp_neighbors, device_type, ip_address, mac_address):
     data = switch_db()
     switch_update = {
         "cdp_neighbors": cdp_neighbors,
