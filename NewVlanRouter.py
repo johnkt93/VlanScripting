@@ -41,6 +41,7 @@ def switch_ssh():
     connect(device=switch_var.get(),username=username_var.get(), password=password_var.get())
 
 def new_window():
+    print(username_var.get(),password_var.get(),alt_password_var.get())
     window.destroy()
     new_window = tk.Tk()
     new_window.title("VLAN Creation Tool")
@@ -100,10 +101,11 @@ def new_window():
     vlan_gateway_input = tk.Entry(new_window, textvariable=vlan_gateway_var)
     vlan_gateway_input.pack()
     vlan_netmask_var = tk.StringVar()
-    vlan_netmask_label = tk.Label(text="Enter the subnet mask. Defaults to 255.255.255.0") or "255.255.255.0"
+    vlan_netmask_label = tk.Label(text="Enter the subnet mask. Defaults to 255.255.255.0") 
     vlan_netmask_label.pack()
     vlan_netmask_input = tk.Entry(new_window, textvariable=vlan_netmask_var)
     vlan_netmask_input.pack()
+    vlan_netmask_input.insert(0,"255.255.255.0")
     vlan_description_var = tk.StringVar()
     vlan_description_label = tk.Label(new_window, text="Enter a brief description for the vlan")
     vlan_description_label.pack()
@@ -124,22 +126,22 @@ def new_window():
     cancel_button.pack(side=tk.RIGHT, padx=10, pady=5)
     new_window.mainloop()
 
-username_var = tk.StringVar
+username_var = tk.StringVar()
 username_label = tk.Label(window, text="Enter your username")
 username_label.pack(pady=10)
 username_input = tk.Entry(window, textvariable=username_var)
 username_input.pack(pady=10)
 
-password_var = tk.StringVar
+password_var = tk.StringVar()
 password_label = tk.Label(window, text="Please enter your Kereberos password")
 password_label.pack(pady=10)
-password_input = tk.Entry(window, textvariable=password_var)
+password_input = tk.Entry(window, textvariable=password_var, show="*")
 password_input.pack(pady=10)
 
-alt_password_var = tk.StringVar
-alt_password_label = tk.Label(window, text = "Please enter your TACACS password, if different from above.\nWill default to above if empty.") or password_var.get()
+alt_password_var = tk.StringVar(value=password_var.get())
+alt_password_label = tk.Label(window, text = "Please enter your TACACS password, if different from above.\nWill default to above if empty.") 
 alt_password_label.pack(pady=10)
-alt_password_input = tk.Entry(window, textvariable=alt_password_var)
+alt_password_input = tk.Entry(window, textvariable=alt_password_var, show="*")
 alt_password_input.pack()
 
 button_frame = tk.Frame(window)
