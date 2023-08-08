@@ -3,9 +3,11 @@
 import paramiko
 import sys
 import os
+import select
 from getpass import getpass
 
-def connect(device,username,password):
+def connect(device,username,password,command):
+    global output
     jumpbox = paramiko.SSHClient()
     #If the host key does not exist in our system, we will add it
     #By default this is set to deny
@@ -33,9 +35,19 @@ def connect(device,username,password):
         jumpbox_channel = jumpbox_transport.open_channel("direct-tcpip", dest_addr, src_addr)
         target.connect(hostname=device,username=username, password=password, sock=jumpbox_channel)
         print(f'Establishing a connection to {device}')
+        stdin, stdout, stderr = target.exec_command(command=command)
+        output = stdout.read().decode("utf-8")
+        while not stdout.channel.exit_status_ready():
+            # Only print data if there is data to read in the channel
+            if stdout.channel.recv_ready():
+                rl,wl,xl = select.select([stdout.channel], [], [], 0.0)
+                if len(rl) > 0:
+                    for line in stdout.readlines():
+                        print(line)
+
     except Exception as e:
         print("An error has occured during the connection process")
         sys.stdout.write(str(e))
 
-    jumpbox.close()
-    target.close()
+    #jumpbox.close()
+    #target.close()

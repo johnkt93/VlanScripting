@@ -1,5 +1,6 @@
 import tkinter as tk
 import json
+import re
 from threading import Thread
 from import_json import *
 from ParamikoSSH import *
@@ -19,7 +20,8 @@ def confirm_command():
     file_creation()
     switch_db()
     #add_switch(switch_var.get(), cdp_neighbors, device_type, ip_address, mac_address)
-
+    cdp_neighbor()
+    print (interface_names)
 def check_switch():
     messagebox.showerror("Oops","Nope, doesn't do anything yet.\n\nTo be programmed.")
 
@@ -37,15 +39,52 @@ def file_exists(file_name):
             return True
     except FileNotFoundError:
         return False
+
+def nsg_login():
+    jumpbox = paramiko.SSHClient()
+    #If the host key does not exist in our system, we will add it
+    #By default this is set to deny
+    jumpbox.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+    ip_address = "nsg-jump-pr01"
+    #Start the SSH connection, with the provided paramaters
+    try:
+        jumpbox.connect(hostname=ip_address, username=username_var.get(), password=password_var.get())
+        print(f'Logging in as {username_var.get()} on {ip_address}')
+        jumpbox.close() #This is just to confirm that the user has access to the system. We'll close the tunnel for now and reopen it when needed.
+        window.destroy()
+        new_window()
+
+    except Exception as e:
+        sys.stdout.write(str(e))
+        messagebox.showerror("nsg-jump-pr01 login failed!","Please check your login credentials, or network connection, and try again.")
+        return
+
+def router_ssh():
+    connect(device=router_var.get(),username=username_var.get(), password=alt_password_var.get())
+
 def switch_ssh():
     connect(device=switch_var.get(),username=username_var.get(), password=password_var.get())
 
+def cdp_neighbor():
+    global interface_names
+    interface_names = []
+    regex = r"^.{17}(\b(Ten|Gig|Loo|Vla).{15})"
+    connect(device=switch_var.get(),username=username_var.get(), password=password_var.get(), command="sh cdp ne \n")
+    matches = re.finditer(regex, output, re.MULTILINE)
+    for match in matches:
+        temp_interface_name = match.group(1).strip()
+        interface_names.append(temp_interface_name)
+    return interface_names
 def new_window():
-    print(username_var.get(),password_var.get(),alt_password_var.get())
-    window.destroy()
+    #Print the credentials for debugging purposes. DO NOT ENABLE FOR LIVE!
+    #print(username_var.get(),password_var.get(),alt_password_var.get())
+    #ssh_thread = Thread(target=connect(switch_var.get(),username_var.get(),password_var.get()))
+    #ssh_thread.start()
+    
     new_window = tk.Tk()
     new_window.title("VLAN Creation Tool")
-
+    
     global change_number_var
     global router_var
     global switch_var
@@ -147,7 +186,7 @@ alt_password_input.pack()
 button_frame = tk.Frame(window)
 button_frame.pack(side=tk.BOTTOM, pady=5)
 
-confirm_button = tk.Button(button_frame, text= "Confirm", command=new_window)
+confirm_button = tk.Button(button_frame, text= "Confirm", command=nsg_login)
 confirm_button.pack(side=tk.LEFT, padx=10, pady=5)
 
 cancel_button = tk.Button(button_frame, text = "Cancel", command=window.destroy)
