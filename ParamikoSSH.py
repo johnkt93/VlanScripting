@@ -6,6 +6,8 @@ import os
 import select
 from getpass import getpass
 
+output = ""
+
 def connect(device,username,password,command):
     global output
     jumpbox = paramiko.SSHClient()

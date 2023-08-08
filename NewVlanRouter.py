@@ -67,14 +67,14 @@ def switch_ssh():
     connect(device=switch_var.get(),username=username_var.get(), password=password_var.get())
 
 def cdp_neighbor():
-    global interface_names
+    global interface_links
     interface_names = []
     regex = r"^.{17}(\b(Ten|Gig|Loo|Vla).{15})"
     connect(device=switch_var.get(),username=username_var.get(), password=password_var.get(), command="sh cdp ne \n")
     matches = re.finditer(regex, output, re.MULTILINE)
     for match in matches:
         temp_interface_name = match.group(1).strip()
-        interface_names.append(temp_interface_name)
+        interface_links.append(temp_interface_name)
     return interface_names
 def new_window():
     #Print the credentials for debugging purposes. DO NOT ENABLE FOR LIVE!
