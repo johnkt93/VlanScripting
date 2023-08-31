@@ -13,7 +13,9 @@ routers = ["cumm111-dist-aca01",
     "cumm024-dist-aca03",
     "cumm024-dist-aca04"]
 
-dhcp_servers = []
+dhcp_servers = [] # I totally forgot what this was for, keeping it in until I remember
+interface_links = []
+hosts = []
 
 def confirm_command():
     #switch_ssh()
@@ -21,7 +23,9 @@ def confirm_command():
     switch_db()
     #add_switch(switch_var.get(), cdp_neighbors, device_type, ip_address, mac_address)
     cdp_neighbor()
-    print (interface_names)
+    print(interface_links)
+    print(hosts)
+
 def check_switch():
     messagebox.showerror("Oops","Nope, doesn't do anything yet.\n\nTo be programmed.")
 
@@ -68,14 +72,23 @@ def switch_ssh():
 
 def cdp_neighbor():
     global interface_links
-    interface_names = []
+    global hosts
+    interface_links = []
+    hosts = []
     regex = r"^.{17}(\b(Ten|Gig|Loo|Vla).{15})"
+    host_regex = re.compile(r"(\S+)\s+Gig\s+\d+/\d+/\d+")
     connect(device=switch_var.get(),username=username_var.get(), password=password_var.get(), command="sh cdp ne \n")
     matches = re.finditer(regex, output, re.MULTILINE)
+    hostname = host_regex.findall(output)
+    for host in hostname:
+        hosts.append(host)
     for match in matches:
-        temp_interface_name = match.group(1).strip()
-        interface_links.append(temp_interface_name)
-    return interface_names
+        temp_interface_links = match.group(1).strip()
+        interface_links.append(temp_interface_links)
+    return interface_links, hosts
+    
+
+
 def new_window():
     #Print the credentials for debugging purposes. DO NOT ENABLE FOR LIVE!
     #print(username_var.get(),password_var.get(),alt_password_var.get())
