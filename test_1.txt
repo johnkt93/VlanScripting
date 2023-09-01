@@ -1,0 +1,38 @@
+1. Create configuration backup
+copy running-config startup-config
+show archive
+
+2. Configure the new VLAN
+config t
+vlan 
+name 
+end
+
+3. Configure and activate VLAN Interface (Layer 3)
+config t
+interface vlan 
+description 
+ip access-group vlan-multi:110:in-default in
+ip verify unicast source reachable-via rx allow-default allow-self-ping
+ip helper-address  To be scripted(helper address only needed if DHCP is in use)
+ip helper-address  To be scripted
+no ip redirect
+no ip unreachables
+no ip proxy-arp
+ip  address  255.255.255.0
+
+4.conf t
+interface VLAN 
+ip pim sparse-dense-mode
+ip pim neighbor-filter 6
+ip pim bsr-border
+end
+
+5. Add the VLAN to requested port 
+conf t
+int 
+switchport trunk allowed vlan add 
+end
+
+
+copy run start

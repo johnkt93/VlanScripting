@@ -1,7 +1,7 @@
 import tkinter as tk
 import json
 import re
-from threading import Thread
+from threading import Thread, Lock
 from import_json import *
 from ParamikoSSH import *
 from tkinter import messagebox
@@ -16,6 +16,10 @@ routers = ["cumm111-dist-aca01",
 dhcp_servers = [] # I totally forgot what this was for, keeping it in until I remember
 interface_links = []
 hosts = []
+
+def threading():
+    t1=Thread(target=confirm_command)
+    t1.start()
 
 def confirm_command():
     #switch_ssh()
@@ -54,7 +58,7 @@ def nsg_login():
     #Start the SSH connection, with the provided paramaters
     try:
         jumpbox.connect(hostname=ip_address, username=username_var.get(), password=password_var.get())
-        print(f'Logging in as {username_var.get()} on {ip_address}')
+        print(f'Performing initial log in.\nLogging in as {username_var.get()} on {ip_address}')
         jumpbox.close() #This is just to confirm that the user has access to the system. We'll close the tunnel for now and reopen it when needed.
         window.destroy()
         new_window()
@@ -73,11 +77,14 @@ def switch_ssh():
 def cdp_neighbor():
     global interface_links
     global hosts
+    global output
+    
+    connect(device=switch_var.get(),username=username_var.get(), password=password_var.get(), command="sh cdp ne \n")
+    output = ""
     interface_links = []
     hosts = []
     regex = r"^.{17}(\b(Ten|Gig|Loo|Vla).{15})"
     host_regex = re.compile(r"(\S+)\s+Gig\s+\d+/\d+/\d+")
-    connect(device=switch_var.get(),username=username_var.get(), password=password_var.get(), command="sh cdp ne \n")
     matches = re.finditer(regex, output, re.MULTILINE)
     hostname = host_regex.findall(output)
     for host in hostname:
@@ -87,8 +94,6 @@ def cdp_neighbor():
         interface_links.append(temp_interface_links)
     return interface_links, hosts
     
-
-
 def new_window():
     #Print the credentials for debugging purposes. DO NOT ENABLE FOR LIVE!
     #print(username_var.get(),password_var.get(),alt_password_var.get())
@@ -171,7 +176,7 @@ def new_window():
     button_frame = tk.Frame(new_window)
     button_frame.pack(side=tk.BOTTOM, pady=5)
 
-    confirm_button = tk.Button(button_frame, text= "Confirm", command=confirm_command)
+    confirm_button = tk.Button(button_frame, text= "Confirm", command=threading)
     confirm_button.pack(side=tk.LEFT, padx=10, pady=5)
 
     cancel_button = tk.Button(button_frame, text = "Cancel", command=new_window.destroy)

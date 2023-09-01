@@ -50,6 +50,6 @@ def connect(device,username,password,command):
     except Exception as e:
         print("An error has occured during the connection process")
         sys.stdout.write(str(e))
-
+    return output
     #jumpbox.close()
     #target.close()
