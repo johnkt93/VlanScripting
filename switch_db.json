@@ -4,10 +4,11 @@
         {
             "cumm111": [
                 {
-                    "cdp_neighbors": "cumm112",
+                    "cdp_neighbors": "",
                     "device_type": "",
                     "ip_address": "",
-                    "mac_address": ""
+                    "mac_address": "",
+                    "interfaces": ""
                 }
             ]
         }

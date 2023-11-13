@@ -2,6 +2,7 @@ import tkinter as tk
 import json
 import re
 from threading import Thread, Lock
+from time import sleep
 from import_json import *
 from ParamikoSSH import *
 from tkinter import messagebox
@@ -13,22 +14,36 @@ routers = ["cumm111-dist-aca01",
     "cumm024-dist-aca03",
     "cumm024-dist-aca04"]
 
-dhcp_servers = [] # I totally forgot what this was for, keeping it in until I remember
+dhcp_servers = []
 interface_links = []
 hosts = []
 
-def threading():
-    t1=Thread(target=confirm_command)
-    t1.start()
+lock = Lock()
+
+def data(list_type,list_data,lock):
+    global hosts
+    global interface_links
+    with lock:
+        if list_type == "hosts":
+            local_list = hosts
+            local_list.extend(list_data)
+            sleep(0.1)
+            hosts = local_list
+        elif list_type == "interface_links":
+            local_list = interface_links
+            local_list.extend(list_data)
+            sleep(0.1)
+            interface_links = local_list
+        else:
+            messagebox.showerror("Oops","Sorry something went wrong.")
 
 def confirm_command():
     #switch_ssh()
     file_creation()
     switch_db()
     #add_switch(switch_var.get(), cdp_neighbors, device_type, ip_address, mac_address)
-    cdp_neighbor()
-    print(interface_links)
-    print(hosts)
+    #cdp_neighbor()
+    sleep(0.1)
 
 def check_switch():
     messagebox.showerror("Oops","Nope, doesn't do anything yet.\n\nTo be programmed.")
@@ -75,31 +90,50 @@ def switch_ssh():
     connect(device=switch_var.get(),username=username_var.get(), password=password_var.get())
 
 def cdp_neighbor():
-    global interface_links
-    global hosts
     global output
     
-    connect(device=switch_var.get(),username=username_var.get(), password=password_var.get(), command="sh cdp ne \n")
-    output = ""
-    interface_links = []
-    hosts = []
-    regex = r"^.{17}(\b(Ten|Gig|Loo|Vla).{15})"
-    host_regex = re.compile(r"(\S+)\s+Gig\s+\d+/\d+/\d+")
-    matches = re.finditer(regex, output, re.MULTILINE)
-    hostname = host_regex.findall(output)
-    for host in hostname:
-        hosts.append(host)
-    for match in matches:
-        temp_interface_links = match.group(1).strip()
-        interface_links.append(temp_interface_links)
-    return interface_links, hosts
+    device_entry = ""
+    device_name = ""
+    platform = ""
+    ip_address = ""
+    interface=""
+
+    def cdp_connect():
+        nonlocal device_entry
+        nonlocal device_name
+        nonlocal platform
+        nonlocal ip_address
+        nonlocal interface
+
+        connect_thread = Thread(target=connect(device=switch_var.get(),username=username_var.get(), password=password_var.get(), command="sh cdp ne detail\n")) #actual code
+        #print(output)
+        connect_thread.start()
+        connect_thread.join()
+        device_entry = re.split(r"[-]{9,}\n")
+        
+
+    thread = Thread(target=cdp_connect)
+    thread.start()
+    thread.join()
+    for device in device_entry:
+        device_name = re.findall(r"Device ID:\s+([^\n]+)\.bu\.edu\s+",device)
+        platform = re.findall(r"Platform:\s([^,]+)", device)
+        ip_address = re.findall(r"IP address:\s+([\d.]+)\s+",device)
+        interface = re.findall(r"Interface:\s+([^,]+)",device)
+        for device_name, ip_address, interface in zip(device_name, ip_address, interface):
+                print("Device Name:", device_name.strip().split(".")[0])
+                print("Platform:", platform.strip())
+                print("IP Address:", ip_address.strip())
+                print("Interface:", interface.strip())
+                print()
     
 def new_window():
     #Print the credentials for debugging purposes. DO NOT ENABLE FOR LIVE!
     #print(username_var.get(),password_var.get(),alt_password_var.get())
-    #ssh_thread = Thread(target=connect(switch_var.get(),username_var.get(),password_var.get()))
-    #ssh_thread.start()
-    
+    ssh_thread = Thread(target=connect(switch_var.get(),username_var.get(),password_var.get()))
+    ssh_thread.start()
+    ssh_thread.join()#Wait for the connection to complete before running the rest of the program
+
     new_window = tk.Tk()
     new_window.title("VLAN Creation Tool")
     
@@ -176,7 +210,7 @@ def new_window():
     button_frame = tk.Frame(new_window)
     button_frame.pack(side=tk.BOTTOM, pady=5)
 
-    confirm_button = tk.Button(button_frame, text= "Confirm", command=threading)
+    confirm_button = tk.Button(button_frame, text= "Confirm", command=confirm_command)
     confirm_button.pack(side=tk.LEFT, padx=10, pady=5)
 
     cancel_button = tk.Button(button_frame, text = "Cancel", command=new_window.destroy)

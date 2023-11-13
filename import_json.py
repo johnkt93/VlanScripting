@@ -11,13 +11,14 @@ def switch_db():
 
     return data
 
-def add_switch(switch, cdp_neighbors, device_type, ip_address, mac_address):
+def add_switch(switch, cdp_neighbors, device_type, ip_address, mac_address, interface):
     data = switch_db()
     switch_update = {
         "cdp_neighbors": cdp_neighbors,
         "device_type":device_type,
         "ip_address": ip_address,
         "mac_address": mac_address,
+        "interface": interface
     }
     switch_entry = {
         switch: [switch_update]
@@ -45,13 +46,14 @@ def add_switch(switch, cdp_neighbors, device_type, ip_address, mac_address):
     with open("switch_db.json", "w") as write_file:
         json.dump(data,write_file, indent=4, sort_keys=True)
 
-def update_switch(switch, device_type="", ip_address="", mac_address="", cdp_neighbors=""):
+def update_switch(switch, device_type="", ip_address="", mac_address="", cdp_neighbors="",interface=""):
     data = switch_db()
     switch_update = {
         "cdp_neighbors": cdp_neighbors,
         "device_type":device_type,
         "ip_address": ip_address,
-        "mac_address": mac_address
+        "mac_address": mac_address,
+        "interface": interface
     }
     
     switch_entry = {
@@ -66,7 +68,10 @@ def update_switch(switch, device_type="", ip_address="", mac_address="", cdp_nei
     if data["switches"][0]["ip_address"] != switch_update["ip_address"]:
         data["switches"][0]["device_type"] = switch_update["ip_address"]
     if data["switches"][0]["mac_address"] != switch_update["mac_address"]:
-        data["switches"][0]["mac_address"] = switch_update["mac_address"]"""
+        data["switches"][0]["mac_address"] = switch_update["mac_address"]
+    if data["switches"][0]["interface"] != switch_update["interface"]:
+        data["switches"][0]["interface"] = switch_update["interface"]
+    """
 
     with open("switch_db.json", "w") as write_file:
         json.dump(data, write_file, indent=4, sort_keys=True)
