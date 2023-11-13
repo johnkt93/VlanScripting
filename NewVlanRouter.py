@@ -83,57 +83,7 @@ def nsg_login():
         messagebox.showerror("nsg-jump-pr01 login failed!","Please check your login credentials, or network connection, and try again.")
         return
 
-def router_ssh():
-    connect(device=router_var.get(),username=username_var.get(), password=alt_password_var.get())
-
-def switch_ssh():
-    connect(device=switch_var.get(),username=username_var.get(), password=password_var.get())
-
-def cdp_neighbor():
-    global output
-    
-    device_entry = ""
-    device_name = ""
-    platform = ""
-    ip_address = ""
-    interface=""
-
-    def cdp_connect():
-        nonlocal device_entry
-        nonlocal device_name
-        nonlocal platform
-        nonlocal ip_address
-        nonlocal interface
-
-        connect_thread = Thread(target=connect(device=switch_var.get(),username=username_var.get(), password=password_var.get(), command="sh cdp ne detail\n")) #actual code
-        #print(output)
-        connect_thread.start()
-        connect_thread.join()
-        device_entry = re.split(r"[-]{9,}\n")
-        
-
-    thread = Thread(target=cdp_connect)
-    thread.start()
-    thread.join()
-    for device in device_entry:
-        device_name = re.findall(r"Device ID:\s+([^\n]+)\.bu\.edu\s+",device)
-        platform = re.findall(r"Platform:\s([^,]+)", device)
-        ip_address = re.findall(r"IP address:\s+([\d.]+)\s+",device)
-        interface = re.findall(r"Interface:\s+([^,]+)",device)
-        for device_name, ip_address, interface in zip(device_name, ip_address, interface):
-                print("Device Name:", device_name.strip().split(".")[0])
-                print("Platform:", platform.strip())
-                print("IP Address:", ip_address.strip())
-                print("Interface:", interface.strip())
-                print()
-    
 def new_window():
-    #Print the credentials for debugging purposes. DO NOT ENABLE FOR LIVE!
-    #print(username_var.get(),password_var.get(),alt_password_var.get())
-    ssh_thread = Thread(target=connect(switch_var.get(),username_var.get(),password_var.get()))
-    ssh_thread.start()
-    ssh_thread.join()#Wait for the connection to complete before running the rest of the program
-
     new_window = tk.Tk()
     new_window.title("VLAN Creation Tool")
     
@@ -146,6 +96,12 @@ def new_window():
     global vlan_gateway_var
     global vlan_netmask_var
     global switchport_var
+
+    #Print the credentials for debugging purposes. DO NOT ENABLE FOR LIVE!
+    #print(username_var.get(),password_var.get(),alt_password_var.get())
+    ssh_thread = Thread(target=connect(switch_var.get(),username_var.get(),password_var.get()))
+    ssh_thread.start()
+    ssh_thread.join()#Wait for the connection to complete before running the rest of the program
 
     change_number_var = tk.StringVar()
     change_number_label = tk.Label(new_window, text="Change Request Number:")
@@ -243,6 +199,50 @@ confirm_button.pack(side=tk.LEFT, padx=10, pady=5)
 
 cancel_button = tk.Button(button_frame, text = "Cancel", command=window.destroy)
 cancel_button.pack(side=tk.RIGHT, padx=10, pady=5)
+
+def router_ssh():
+    connect(device=router_var.get(),username=username_var.get(), password=alt_password_var.get())
+
+def switch_ssh():
+    connect(device=switch_var.get(),username=username_var.get(), password=password_var.get())
+
+def cdp_neighbor():
+    global output
+    
+    device_entry = ""
+    device_name = ""
+    platform = ""
+    ip_address = ""
+    interface=""
+
+    def cdp_connect():
+        nonlocal device_entry
+        nonlocal device_name
+        nonlocal platform
+        nonlocal ip_address
+        nonlocal interface
+
+        connect_thread = Thread(target=connect(device=switch_var.get(),username=username_var.get(), password=password_var.get(), command="sh cdp ne detail\n")) #actual code
+        #print(output)
+        connect_thread.start()
+        connect_thread.join()
+        device_entry = re.split(r"[-]{9,}\n")
+        
+
+    thread = Thread(target=cdp_connect)
+    thread.start()
+    thread.join()
+    for device in device_entry:
+        device_name = re.findall(r"Device ID:\s+([^\n]+)\.bu\.edu\s+",device)
+        platform = re.findall(r"Platform:\s([^,]+)", device)
+        ip_address = re.findall(r"IP address:\s+([\d.]+)\s+",device)
+        interface = re.findall(r"Interface:\s+([^,]+)",device)
+        for device_name, ip_address, interface in zip(device_name, ip_address, interface):
+                print("Device Name:", device_name.strip().split(".")[0])
+                print("Platform:", platform.strip())
+                print("IP Address:", ip_address.strip())
+                print("Interface:", interface.strip())
+                print()
 
 def file_creation():
     file_content = ""
