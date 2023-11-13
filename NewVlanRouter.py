@@ -84,35 +84,6 @@ alt_password_input.pack()
 button_frame = tk.Frame(window)
 button_frame.pack(side=tk.BOTTOM, pady=5)
 
-def nsg_login():
-    jumpbox = paramiko.SSHClient()
-    #If the host key does not exist in our system, we will add it
-    #By default this is set to deny
-    jumpbox.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
-    ip_address = "nsg-jump-pr01"
-    #Start the SSH connection, with the provided paramaters
-    try:
-        t1 = jumpbox.connect(hostname=ip_address, username=username_var.get(), password=password_var.get(),port=22)
-        print(f'Performing initial log in.\nLogging in as {username_var.get()} on {ip_address}')
-        l1 = Thread(target=t1)
-        l1.start()
-        l1.join()
-        print('Login Success!')
-        #jumpbox.close() #This is just to confirm that the user has access to the system. We'll close the tunnel for now and reopen it when needed.
-        window.destroy()
-        #new_window()
-    except Exception as e:
-        sys.stdout.write(str(e))
-        messagebox.showerror("nsg-jump-pr01 login failed!","Please check your login credentials, or network connection, and try again.")
-        return
-
-confirm_button = tk.Button(button_frame, text= "Confirm", command=nsg_login)
-confirm_button.pack(side=tk.LEFT, padx=10, pady=5)
-
-cancel_button = tk.Button(button_frame, text = "Cancel", command=window.destroy)
-cancel_button.pack(side=tk.RIGHT, padx=10, pady=5)
-
 def new_window():
     new_window = tk.Tk()
     new_window.title("VLAN Creation Tool")
@@ -129,9 +100,6 @@ def new_window():
 
     #Print the credentials for debugging purposes. DO NOT ENABLE FOR LIVE!
     #print(username_var.get(),password_var.get(),alt_password_var.get())
-    ssh_thread = Thread(target=connect(switch_var.get(),username_var.get(),password_var.get()))
-    ssh_thread.start()
-    ssh_thread.join()#Wait for the connection to complete before running the rest of the program
 
     change_number_var = tk.StringVar()
     change_number_label = tk.Label(new_window, text="Change Request Number:")
@@ -196,12 +164,46 @@ def new_window():
     button_frame = tk.Frame(new_window)
     button_frame.pack(side=tk.BOTTOM, pady=5)
 
+    ssh_thread = Thread(target=connect(switch_var.get(),username_var.get(),password_var.get()))
+    ssh_thread.start()
+    ssh_thread.join()#Wait for the connection to complete before running the rest of the program
+
     confirm_button = tk.Button(button_frame, text= "Confirm", command=confirm_command)
     confirm_button.pack(side=tk.LEFT, padx=10, pady=5)
 
     cancel_button = tk.Button(button_frame, text = "Cancel", command=new_window.destroy)
     cancel_button.pack(side=tk.RIGHT, padx=10, pady=5)
     new_window.mainloop()
+    
+def nsg_login():
+    jumpbox = paramiko.SSHClient()
+    #If the host key does not exist in our system, we will add it
+    #By default this is set to deny
+    jumpbox.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+    ip_address = "nsg-jump-pr01"
+    #Start the SSH connection, with the provided paramaters
+    try:
+        t1 = jumpbox.connect(hostname=ip_address, username=username_var.get(), password=password_var.get(),port=22)
+        print(f'Performing initial log in.\nLogging in as {username_var.get()} on {ip_address}')
+        jumpbox.close() #This is just to confirm that the user has access to the system. We'll close the tunnel for now and reopen it when needed.
+        l1 = Thread(target=t1)
+        l1.start()
+        l1.join()
+        print('Login Success!')
+        window.destroy()
+        pass
+    except Exception as e:
+        sys.stdout.write(str(e))
+        messagebox.showerror("nsg-jump-pr01 login failed!","Please check your login credentials, or network connection, and try again.")
+        return
+    new_window()
+
+confirm_button = tk.Button(button_frame, text= "Confirm", command=nsg_login)
+confirm_button.pack(side=tk.LEFT, padx=10, pady=5)
+
+cancel_button = tk.Button(button_frame, text = "Cancel", command=window.destroy)
+cancel_button.pack(side=tk.RIGHT, padx=10, pady=5)
 
 def router_ssh():
     connect(device=router_var.get(),username=username_var.get(), password=alt_password_var.get())
