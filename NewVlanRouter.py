@@ -164,7 +164,7 @@ def new_window():
     button_frame = tk.Frame(new_window)
     button_frame.pack(side=tk.BOTTOM, pady=5)
 
-    ssh_thread = Thread(target=connect(switch_var.get(),username_var.get(),password_var.get()))
+    ssh_thread = Thread(target=connect(switch_var.get(),username_var.get(),password_var.get(),command=""))
     ssh_thread.start()
     ssh_thread.join()#Wait for the connection to complete before running the rest of the program
 
@@ -174,7 +174,7 @@ def new_window():
     cancel_button = tk.Button(button_frame, text = "Cancel", command=new_window.destroy)
     cancel_button.pack(side=tk.RIGHT, padx=10, pady=5)
     new_window.mainloop()
-    
+
 def nsg_login():
     jumpbox = paramiko.SSHClient()
     #If the host key does not exist in our system, we will add it
