@@ -46,6 +46,7 @@ def connect(device,username,password,command):
                 if len(rl) > 0:
                     for line in stdout.readlines():
                         print(line)
+        print("Login Success!")
 
     except Exception as e:
         print("An error has occured during the connection process")
