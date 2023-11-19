@@ -164,7 +164,7 @@ def new_window():
     button_frame = tk.Frame(new_window)
     button_frame.pack(side=tk.BOTTOM, pady=5)
 
-    ssh_thread = Thread(target=connect(switch_var.get(),username_var.get(),password_var.get(),command=""))
+    ssh_thread = Thread(target=connect(switch_var.get(),username_var.get(),password_var.get(),command=None))
     ssh_thread.start()
     ssh_thread.join()#Wait for the connection to complete before running the rest of the program
 
