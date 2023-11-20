@@ -37,16 +37,13 @@ def data(list_type,list_data,lock):
         else:
             messagebox.showerror("Oops","Sorry something went wrong.")
 
-def confirm_command():
-    #switch_ssh()
-    file_creation()
-    switch_db()
-    #add_switch(switch_var.get(), cdp_neighbors, device_type, ip_address, mac_address)
-    #cdp_neighbor()
-    sleep(0.1)
-
 def check_switch():
-    messagebox.showerror("Oops","Nope, doesn't do anything yet.\n\nTo be programmed.")
+    try:
+        connect(switch_var.get(),username_var.get(),password_var.get(),command="sh cdp ne\n")
+        messagebox.showinfo(title=(f'{switch_var.get()}'),message=(f'{output}'))
+        print(*output)
+    except Exception as e:
+        messagebox.showerror(title='Error!', message=e)
 
 def switch_db():
     try:
@@ -99,9 +96,6 @@ def new_window():
 
     #Print the credentials for debugging purposes. DO NOT ENABLE FOR LIVE!
     #print(username_var.get(),password_var.get(),alt_password_var.get())
-    ssh_thread = Thread(target=connect(switch_var.get(),username_var.get(),password_var.get()))
-    ssh_thread.start()
-    ssh_thread.join()#Wait for the connection to complete before running the rest of the program
 
     change_number_var = tk.StringVar()
     change_number_label = tk.Label(new_window, text="Change Request Number:")
@@ -163,8 +157,20 @@ def new_window():
     multicast_checkbox = tk.Checkbutton(new_window, text="Check if multicast was requested", variable=multicast_checkbox_var)
     multicast_checkbox.pack()
 
+    ssh_thread = Thread(target=connect, args=(switch_var.get(),username_var.get(),password_var.get()))
+    ssh_thread.start()
+    ssh_thread.join()#Wait for the connection to complete before running the rest of the program
+    
     button_frame = tk.Frame(new_window)
     button_frame.pack(side=tk.BOTTOM, pady=5)
+
+    def confirm_command():
+        switch_ssh()
+        file_creation()
+        switch_db()
+        #add_switch(switch_var.get(), cdp_neighbors, device_type, ip_address, mac_address)
+        #cdp_neighbor()
+        sleep(0.1)
 
     confirm_button = tk.Button(button_frame, text= "Confirm", command=confirm_command)
     confirm_button.pack(side=tk.LEFT, padx=10, pady=5)
@@ -201,11 +207,17 @@ cancel_button = tk.Button(button_frame, text = "Cancel", command=window.destroy)
 cancel_button.pack(side=tk.RIGHT, padx=10, pady=5)
 
 def router_ssh():
-    connect(device=router_var.get(),username=username_var.get(), password=alt_password_var.get())
+    #connect(device=router_var.get(),username=username_var.get(), password=alt_password_var.get())
+    pass
 
 def switch_ssh():
-    connect(device=switch_var.get(),username=username_var.get(), password=password_var.get())
-
+    try:
+        connect(device=switch_var.get(),username=username_var.get(), password=password_var.get())
+    except Exception as e:
+        messagebox.showerror(title="Error!",message="An error has occured during the connection process\nCheck the switch name, or that ssh is enabled, and the switch is online.")
+        sys.stdout.write(str(e))
+        return
+    
 def cdp_neighbor():
     global output
     
@@ -290,5 +302,6 @@ end
     else:
         with open(file_name, "w") as file:
             file.write(file_content)
+            messagebox.showinfo(title="Completed", message=(f'Change {change_number_var.get()}.txt has been created.'))
 
 window.mainloop()

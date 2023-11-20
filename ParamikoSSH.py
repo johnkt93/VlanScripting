@@ -5,10 +5,11 @@ import sys
 import os
 import select
 from getpass import getpass
+from io import StringIO
 
 output = ""
 
-def connect(device,username,password,command):
+def connect(device,username,password,command=None):
     global output
     jumpbox = paramiko.SSHClient()
     #If the host key does not exist in our system, we will add it
@@ -37,19 +38,24 @@ def connect(device,username,password,command):
         jumpbox_channel = jumpbox_transport.open_channel("direct-tcpip", dest_addr, src_addr)
         target.connect(hostname=device,username=username, password=password, sock=jumpbox_channel)
         print(f'Establishing a connection to {device}')
-        stdin, stdout, stderr = target.exec_command(command=command)
-        output = stdout.read().decode("utf-8")
-        while not stdout.channel.exit_status_ready():
-            # Only print data if there is data to read in the channel
-            if stdout.channel.recv_ready():
-                rl,wl,xl = select.select([stdout.channel], [], [], 0.0)
-                if len(rl) > 0:
-                    for line in stdout.readlines():
-                        print(line)
+        if command is not None:
+            stdin, stdout, stderr = target.exec_command(command=command)
+            output_stream = StringIO()
+            sys.stdout = output_stream
+
+            while not stdout.channel.exit_status_ready():
+                if stdout.channel.recv_ready():
+                    rl, wl, xl = select.select([stdout.channel], [], [], 0.0)
+                    if len(rl) > 0:
+                        for line in stdout.readlines():
+                            print(line, end='')  # Print without adding extra newline characters
+                            
+            output = output_stream.getvalue()
 
     except Exception as e:
         print("An error has occured during the connection process")
         sys.stdout.write(str(e))
+    finally:
+        sys.stdout = sys.__stdout__
+
     return output
-    #jumpbox.close()
-    #target.close()
