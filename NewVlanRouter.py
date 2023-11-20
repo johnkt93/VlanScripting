@@ -16,7 +16,7 @@ routers = ["cumm111-dist-aca01",
 
 dhcp_servers = []
 interface_links = []
-hosts = []
+hosts = [] 
 
 lock = Lock()
 
@@ -59,26 +59,27 @@ def file_exists(file_name):
             return True
     except FileNotFoundError:
         return False
+    
+username_var = tk.StringVar()
+username_label = tk.Label(window, text="Enter your username")
+username_label.pack(pady=10)
+username_input = tk.Entry(window, textvariable=username_var)
+username_input.pack(pady=10)
 
-def nsg_login():
-    jumpbox = paramiko.SSHClient()
-    #If the host key does not exist in our system, we will add it
-    #By default this is set to deny
-    jumpbox.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+password_var = tk.StringVar()
+password_label = tk.Label(window, text="Please enter your Kereberos password")
+password_label.pack(pady=10)
+password_input = tk.Entry(window, textvariable=password_var, show="*")
+password_input.pack(pady=10)
 
-    ip_address = "nsg-jump-pr01"
-    #Start the SSH connection, with the provided paramaters
-    try:
-        jumpbox.connect(hostname=ip_address, username=username_var.get(), password=password_var.get())
-        print(f'Performing initial log in.\nLogging in as {username_var.get()} on {ip_address}')
-        jumpbox.close() #This is just to confirm that the user has access to the system. We'll close the tunnel for now and reopen it when needed.
-        window.destroy()
-        new_window()
+alt_password_var = tk.StringVar(value=password_var.get())
+alt_password_label = tk.Label(window, text = "Please enter your TACACS password, if different from above.\nWill default to above if empty.") 
+alt_password_label.pack(pady=10)
+alt_password_input = tk.Entry(window, textvariable=alt_password_var, show="*")
+alt_password_input.pack()
 
-    except Exception as e:
-        sys.stdout.write(str(e))
-        messagebox.showerror("nsg-jump-pr01 login failed!","Please check your login credentials, or network connection, and try again.")
-        return
+button_frame = tk.Frame(window)
+button_frame.pack(side=tk.BOTTOM, pady=5)
 
 def new_window():
     new_window = tk.Tk()
@@ -179,26 +180,29 @@ def new_window():
     cancel_button.pack(side=tk.RIGHT, padx=10, pady=5)
     new_window.mainloop()
 
-username_var = tk.StringVar()
-username_label = tk.Label(window, text="Enter your username")
-username_label.pack(pady=10)
-username_input = tk.Entry(window, textvariable=username_var)
-username_input.pack(pady=10)
+def nsg_login():
+    jumpbox = paramiko.SSHClient()
+    #If the host key does not exist in our system, we will add it
+    #By default this is set to deny
+    jumpbox.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-password_var = tk.StringVar()
-password_label = tk.Label(window, text="Please enter your Kereberos password")
-password_label.pack(pady=10)
-password_input = tk.Entry(window, textvariable=password_var, show="*")
-password_input.pack(pady=10)
-
-alt_password_var = tk.StringVar(value=password_var.get())
-alt_password_label = tk.Label(window, text = "Please enter your TACACS password, if different from above.\nWill default to above if empty.") 
-alt_password_label.pack(pady=10)
-alt_password_input = tk.Entry(window, textvariable=alt_password_var, show="*")
-alt_password_input.pack()
-
-button_frame = tk.Frame(window)
-button_frame.pack(side=tk.BOTTOM, pady=5)
+    ip_address = "nsg-jump-pr01"
+    #Start the SSH connection, with the provided paramaters
+    try:
+        t1 = jumpbox.connect(hostname=ip_address, username=username_var.get(), password=password_var.get(),port=22)
+        print(f'Performing initial log in.\nLogging in as {username_var.get()} on {ip_address}')
+        jumpbox.close() #This is just to confirm that the user has access to the system. We'll close the tunnel for now and reopen it when needed.
+        l1 = Thread(target=t1)
+        l1.start()
+        l1.join()
+        print('Login Success!')
+        window.destroy()
+        pass
+    except Exception as e:
+        sys.stdout.write(str(e))
+        messagebox.showerror("nsg-jump-pr01 login failed!","Please check your login credentials, or network connection, and try again.")
+        return
+    new_window()
 
 confirm_button = tk.Button(button_frame, text= "Confirm", command=nsg_login)
 confirm_button.pack(side=tk.LEFT, padx=10, pady=5)
