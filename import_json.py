@@ -61,17 +61,11 @@ def update_switch(switch, device_type="", ip_address="", mac_address="", cdp_nei
     }
 
     data["switches"][switch] = switch_update
-    """if data["switches"][0]["cdp_neighbors"] != switch_update["cdp_neighbors"]:
-        data["switches"][0]["cdp_neighbors"] = switch_update["cdp_neighbors"]
-    if data["switches"][0]["device_type"] != switch_update["device_type"]:
-        data["switches"][0]["device_type"] = switch_update["device_type"]
-    if data["switches"][0]["ip_address"] != switch_update["ip_address"]:
-        data["switches"][0]["device_type"] = switch_update["ip_address"]
-    if data["switches"][0]["mac_address"] != switch_update["mac_address"]:
-        data["switches"][0]["mac_address"] = switch_update["mac_address"]
-    if data["switches"][0]["interface"] != switch_update["interface"]:
-        data["switches"][0]["interface"] = switch_update["interface"]
-    """
+    keys_to_compare = ["cdp_neighbors", "device_type", "ip_address", "mac_address", "interface"]
+
+    for key in keys_to_compare:
+        if data["switches"][0][key] != switch_update[key]:
+            data["switches"][0][key] = switch_update[key]
 
     with open("switch_db.json", "w") as write_file:
         json.dump(data, write_file, indent=4, sort_keys=True)
