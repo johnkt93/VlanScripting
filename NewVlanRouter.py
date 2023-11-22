@@ -5,7 +5,9 @@ from threading import Thread, Lock
 from time import sleep
 from import_json import *
 from ParamikoSSH import *
+from tkinter import *
 from tkinter import messagebox
+from tkinter import scrolledtext
 
 window = tk.Tk()
 window.title("Vlan Creation Tool")
@@ -38,12 +40,56 @@ def data(list_type,list_data,lock):
             messagebox.showerror("Oops","Sorry something went wrong.")
 
 def check_switch():
-    try:
-        connect(switch_var.get(),username_var.get(),password_var.get(),command="sh cdp ne\n")
-        messagebox.showinfo(title=(f'{switch_var.get()}'),message=(f'{output}'))
-        print(*output)
-    except Exception as e:
-        messagebox.showerror(title='Error!', message=e)
+    top = Toplevel()
+    top.geometry("600x400")
+    top.title(switch_var.get())
+    group1=LabelFrame(top,text="Waiting on Input...",padx=5,pady=5, labelanchor='n')
+    group1.grid(row=1,column=0,columnspan=3,padx=10,pady=10,sticky=E+W+N+S)
+
+    top.columnconfigure(0,weight=1)
+    top.rowconfigure(1, weight=1)
+
+    group1.rowconfigure(0, weight=1)
+    group1.columnconfigure(0, weight=1)
+
+    info_area = scrolledtext.ScrolledText(group1,
+                                          width=40,
+                                          height=10,
+                                          font = ("Times New Roman", 10),
+                                          )
+    info_area.grid(pady=5,padx=5,sticky=E+W+N+S)
+    info_area.configure(state='disabled')
+    
+    def update_info(data):
+        info_area.configure(state='normal')
+        info_area.delete('1.0', tk.END)
+        info_area.insert(tk.INSERT, data)
+        info_area.configure(state='disabled')
+    def cdp_neighbor_check():
+        try:
+            output = connect(switch_var.get(),username_var.get(),password_var.get(),command="sh cdp ne\n")
+            data = ''.join(map(str,output))
+            update_info(data)
+            group1.configure(text="CDP Neighbors")
+        except Exception as e:
+            messagebox.showerror(title='Error!', message=e)
+    def vlan_check():
+        try:
+            output = connect(switch_var.get(),username_var.get(),password_var.get(),command="sh vlan brief\n")
+            data = ''.join(map(str,output))
+            update_info(data)
+            group1.configure(text="VLANs")
+        except Exception as e:
+            messagebox.showerror(title='Error!', message=e)     
+    
+    buttons_frame = Frame(top)
+    buttons_frame.grid(row=0,column=0,sticky=W+E)
+    btn_CDP = Button(buttons_frame, text="View CDP", command=cdp_neighbor_check)
+    btn_VLAN = Button(buttons_frame, text="View VLANs", command=vlan_check)
+    btn_CDP.grid(row=0, column=0, padx=10, pady=10)
+    btn_VLAN.grid(row=0, column=1, padx=10, pady=10)
+
+    top.mainloop()
 
 def switch_db():
     try:
@@ -158,9 +204,9 @@ def new_window():
     multicast_checkbox = tk.Checkbutton(new_window, text="Check if multicast was requested", variable=multicast_checkbox_var)
     multicast_checkbox.pack()
 
-    ssh_thread = Thread(target=connect, args=(switch_var.get(),username_var.get(),password_var.get()))
-    ssh_thread.start()
-    ssh_thread.join()#Wait for the connection to complete before running the rest of the program
+    #ssh_thread = Thread(target=connect, args=(switch_var.get(),username_var.get(),password_var.get()))
+    #ssh_thread.start()
+    #ssh_thread.join()#Wait for the connection to complete before running the rest of the program
     
     button_frame = tk.Frame(new_window)
     button_frame.pack(side=tk.BOTTOM, pady=5)

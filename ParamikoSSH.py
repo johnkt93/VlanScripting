@@ -10,7 +10,6 @@ from io import StringIO
 output = ""
 
 def connect(device,username,password,command=None):
-    global output
     jumpbox = paramiko.SSHClient()
     #If the host key does not exist in our system, we will add it
     #By default this is set to deny
@@ -40,22 +39,15 @@ def connect(device,username,password,command=None):
         print(f'Establishing a connection to {device}')
         if command is not None:
             stdin, stdout, stderr = target.exec_command(command=command)
-            output_stream = StringIO()
-            sys.stdout = output_stream
-
-            while not stdout.channel.exit_status_ready():
-                if stdout.channel.recv_ready():
-                    rl, wl, xl = select.select([stdout.channel], [], [], 0.0)
-                    if len(rl) > 0:
-                        for line in stdout.readlines():
-                            print(line, end='')  # Print without adding extra newline characters
-                            
-            output = output_stream.getvalue()
+            output = stdout.readlines()
+            errors = stderr.readlines()
+        return output
+        return errors
 
     except Exception as e:
         print("An error has occured during the connection process")
         sys.stdout.write(str(e))
     finally:
         sys.stdout = sys.__stdout__
-
-    return output
+        target.close()
+        jumpbox.close()
