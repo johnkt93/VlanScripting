@@ -127,6 +127,11 @@ alt_password_input.pack()
 button_frame = tk.Frame(window)
 button_frame.pack(side=tk.BOTTOM, pady=5)
 
+def dropdown_update(*args):
+    selected_option = var.get()
+    updated = [option for option in options if option != selected_option]
+    updated_dropdown['values']= updated
+
 def new_window():
     new_window = tk.Tk()
     new_window.title("VLAN Creation Tool")
@@ -140,6 +145,9 @@ def new_window():
     global vlan_gateway_var
     global vlan_netmask_var
     global switchport_var
+    global multicast_checkbox_var
+    global primary_dhcp_var
+    global secondary_dhcp_var
 
     #Print the credentials for debugging purposes. DO NOT ENABLE FOR LIVE!
     #print(username_var.get(),password_var.get(),alt_password_var.get())
@@ -183,6 +191,11 @@ def new_window():
     vlan_name_label.pack()
     vlan_name_label_input = tk.Entry(new_window, textvariable=vlan_name_var)
     vlan_name_label_input.pack()
+    vlan_description_var = tk.StringVar()
+    vlan_description_label = tk.Label(new_window, text="Enter a brief description for the vlan")
+    vlan_description_label.pack()
+    vlan_description_label_input = tk.Entry(new_window, textvariable=vlan_description_var)
+    vlan_description_label_input.pack()
     vlan_gateway_var = tk.StringVar()
     vlan_gateway_label = tk.Label(new_window, text="Enter the gateway address for the subnet")
     vlan_gateway_label.pack()
@@ -194,11 +207,10 @@ def new_window():
     vlan_netmask_input = tk.Entry(new_window, textvariable=vlan_netmask_var)
     vlan_netmask_input.pack()
     vlan_netmask_input.insert(0,"255.255.255.0")
-    vlan_description_var = tk.StringVar()
-    vlan_description_label = tk.Label(new_window, text="Enter a brief description for the vlan")
-    vlan_description_label.pack()
-    vlan_description_label_input = tk.Entry(new_window, textvariable=vlan_description_var)
-    vlan_description_label_input.pack()
+    primary_dhcp_var = tk.StringVar()
+    primary_dhcp_label = tk.Label(new_window, text="Primary DHCP Server")
+    primary_dhcp_label.pack()
+    primary_dhcp_dropdown = tk.OptionMenu(new_window, primary_dhcp_var, *dhcp_servers)
 
     multicast_checkbox_var = tk.IntVar()
     multicast_checkbox = tk.Checkbutton(new_window, text="Check if multicast was requested", variable=multicast_checkbox_var)
@@ -315,8 +327,8 @@ def file_creation():
     vlan_gateway = vlan_gateway_var.get()
     vlan_netmask = vlan_netmask_var.get()
     switchport = switchport_var.get()
-    primary_dhcp = "To be scripted"
-    secondary_dhcp = "To be scripted"
+    primary_dhcp = primary_dhcp_var.get()
+    secondary_dhcp = secondary_dhcp_var.get()
     archive_step = "1. Create configuration backup\ncopy running-config startup-config\nshow archive"
     vlan_configuration_step = f"2. Configure the new VLAN\nconfig t\nvlan {vlan_number}\nname {vlan_name}\nend"
     vlan_interface_step = f"""3. Configure and activate VLAN Interface (Layer 3)
@@ -325,18 +337,21 @@ interface vlan {vlan_number}
 description {vlan_description}
 ip access-group vlan-multi:110:in-default in
 ip verify unicast source reachable-via rx allow-default allow-self-ping
-ip helper-address  {primary_dhcp}(helper address only needed if DHCP is in use)
+ip helper-address  {primary_dhcp}
 ip helper-address  {secondary_dhcp}
 no ip redirect
 no ip unreachables
 no ip proxy-arp
 ip  address {vlan_gateway} {vlan_netmask}"""
-    multicast_step=f"""4.conf t
-interface VLAN {vlan_number}
-ip pim sparse-dense-mode
-ip pim neighbor-filter 6
-ip pim bsr-border
-end"""
+    if multicast_checkbox_var.get() == True:
+        multicast_step=f"""4.conf t
+    interface VLAN {vlan_number}
+    ip pim sparse-dense-mode
+    ip pim neighbor-filter 6
+    ip pim bsr-border
+    end"""
+    else:
+        multicast_step = None
     vlan_port_step = f"""5. Add the VLAN to requested port 
 conf t
 int {switchport}
@@ -345,7 +360,8 @@ end
 """
     final_step = "copy run start"
     steps = [archive_step,vlan_configuration_step,vlan_interface_step,multicast_step,vlan_port_step,final_step]
-    file_content="\n\n".join(steps)
+    filtered_steps = [step for step in steps if multicast_checkbox_var.get() or step != multicast_step]
+    file_content="\n\n".join(filtered_steps)
     
     if file_exists(file_name):
         messagebox.showerror("File Already Exists", "A file with the same name already exists.\n\nDelete the file, or check the Change Number.")
@@ -353,5 +369,14 @@ end
         with open(file_name, "w") as file:
             file.write(file_content)
             messagebox.showinfo(title="Completed", message=(f'Change {change_number_var.get()}.txt has been created.'))
-
+def trunking(router,end_device):
+    if router not in routers:
+        messagebox.showerror('Router Not Found','Supplied router was not found in the database. Please add the router and re-run the script.\n Or contact John to update the script.')
+    else:
+        try:
+            connect(router,username_var.get(),password_var.get(), command="show int status\n")
+        except:
+            pass
+    add_vlan = ["conf t","description \n"]
+    pass    
 window.mainloop()

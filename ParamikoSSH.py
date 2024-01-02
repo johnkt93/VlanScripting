@@ -42,7 +42,6 @@ def connect(device,username,password,command=None):
             output = stdout.readlines()
             errors = stderr.readlines()
         return output
-        return errors
 
     except Exception as e:
         print("An error has occured during the connection process")
