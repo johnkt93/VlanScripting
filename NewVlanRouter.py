@@ -1,4 +1,6 @@
 import tkinter as tk
+import os
+import platform
 import json
 import re
 from threading import Thread, Lock
@@ -12,11 +14,43 @@ from tkinter import scrolledtext
 window = tk.Tk()
 window.title("Vlan Creation Tool")
 
-routers = ["cumm111-dist-aca01",
-    "cumm024-dist-aca03",
-    "cumm024-dist-aca04"]
+routers = ["comm540-dist-aca01",
+           "comm595-dist-aca02",
+           "comm595-dist-aca03",
+           "comm595-dist-res02",
+           "comm665-dist-aca01",
+           "comm685-dist-aca02",
+           "comm765-dist-aca01",
+           "cumm024-dist-aca03",
+           "cumm024-dist-aca04",
+           "cumm111-dist-aca01",
+           "cumm111-dist-aca02",
+           "cumm111-dist-aca03"
+          ]
 
-dhcp_servers = []
+dhcp_servers = {
+    "dhcp01.bu.edu":'10.254.12.102',
+    "dhcp01.bumc.bu.edu":'10.224.254.30',
+    "dhcp02.bu.edu":'10.254.12.103',
+    "dhcp02.bumc.bu.edu":'10.224.254.80',
+    "dhcp03.bu.edu":'10.254.12.104',
+    'dhcp03.bumc.bu.edu':'10.224.254.31',
+    'dhcp04.bu.edu':'10.254.12.105',
+    'dhcp04.bumc.bu.edu':'10.224.254.81',
+    'dhcp05v.bu.edu':'10.254.12.106',
+    'dhcp06v.bu.edu':'10.254.12.107',
+    'dhcp07.bu.edu':'10.254.12.108',
+    'dhcp08.bu.edu':'10.254.12.109',
+    'dhcp09.bu.edu':'10.254.19.100',
+    'dhcp10.bu.edu':'10.254.19.101',
+    'dhcp11.bu.edu':'10.254.12.114',
+    'dhcp12.bu.edu':'10.254.12.115',
+    'dhcp13.bu.edu':'10.254.12.116',
+    'dhcp14.bu.edu':'10.254.12.117',
+    'dhcp15.bu.edu':'10.254.12.118',
+    'dhcp16.bu.edu':'10.254.12.119',
+    'nseg-00.bu.edu':'128.197.25.32'
+}
 interface_links = []
 hosts = [] 
 
@@ -105,7 +139,26 @@ def file_exists(file_name):
             return True
     except FileNotFoundError:
         return False
-    
+
+def update_primary_dropdowns(*args):
+    selected_option = primary_dhcp_var.get()
+    updated_servers = list(dhcp_servers.keys())
+    updated_servers.remove(selected_option)
+    primary_dhcp_dropdown['menu'].delete(0, 'end')
+    secondary_dhcp_dropdown['menu'].delete(0, 'end')
+    for server in updated_servers:
+        primary_dhcp_dropdown['menu'].add_command(label=server, command=lambda value=server: primary_dhcp_var.set(value))
+        secondary_dhcp_dropdown['menu'].add_command(label=server, command=lambda value=server: secondary_dhcp_var.set(value))
+def update_secondary_dropdowns(*args):
+    selected_option = secondary_dhcp_var.get()
+    updated_servers = list(dhcp_servers.keys())
+    updated_servers.remove(selected_option)
+    primary_dhcp_dropdown['menu'].delete(0, 'end')
+    secondary_dhcp_dropdown['menu'].delete(0, 'end')
+    for server in updated_servers:
+        primary_dhcp_dropdown['menu'].add_command(label=server, command=lambda value=server: primary_dhcp_var.set(value))
+        secondary_dhcp_dropdown['menu'].add_command(label=server, command=lambda value=server: secondary_dhcp_var.set(value))
+   
 username_var = tk.StringVar()
 username_label = tk.Label(window, text="Enter your username")
 username_label.pack(pady=10)
@@ -127,11 +180,6 @@ alt_password_input.pack()
 button_frame = tk.Frame(window)
 button_frame.pack(side=tk.BOTTOM, pady=5)
 
-def dropdown_update(*args):
-    selected_option = var.get()
-    updated = [option for option in options if option != selected_option]
-    updated_dropdown['values']= updated
-
 def new_window():
     new_window = tk.Tk()
     new_window.title("VLAN Creation Tool")
@@ -148,9 +196,8 @@ def new_window():
     global multicast_checkbox_var
     global primary_dhcp_var
     global secondary_dhcp_var
-
-    #Print the credentials for debugging purposes. DO NOT ENABLE FOR LIVE!
-    #print(username_var.get(),password_var.get(),alt_password_var.get())
+    global primary_dhcp_dropdown
+    global secondary_dhcp_dropdown
 
     change_number_var = tk.StringVar()
     change_number_label = tk.Label(new_window, text="Change Request Number:")
@@ -211,6 +258,15 @@ def new_window():
     primary_dhcp_label = tk.Label(new_window, text="Primary DHCP Server")
     primary_dhcp_label.pack()
     primary_dhcp_dropdown = tk.OptionMenu(new_window, primary_dhcp_var, *dhcp_servers)
+    primary_dhcp_dropdown.pack()
+    secondary_dhcp_var = tk.StringVar()
+    secondary_dhcp_label = tk.Label(new_window, text="Secondary DHCP Server")
+    secondary_dhcp_label.pack()
+    secondary_dhcp_dropdown = tk.OptionMenu(new_window, secondary_dhcp_var, *dhcp_servers)
+    secondary_dhcp_dropdown.pack()
+
+    primary_dhcp_var.trace_add('write', update_primary_dropdowns)
+    secondary_dhcp_var.trace_add('write', update_secondary_dropdowns)
 
     multicast_checkbox_var = tk.IntVar()
     multicast_checkbox = tk.Checkbutton(new_window, text="Check if multicast was requested", variable=multicast_checkbox_var)
@@ -287,7 +343,7 @@ def cdp_neighbor():
     device_name = ""
     platform = ""
     ip_address = ""
-    interface=""
+    interface= ""
 
     def cdp_connect():
         nonlocal device_entry
@@ -296,13 +352,11 @@ def cdp_neighbor():
         nonlocal ip_address
         nonlocal interface
 
-        connect_thread = Thread(target=connect(device=switch_var.get(),username=username_var.get(), password=password_var.get(), command="sh cdp ne detail\n")) #actual code
-        #print(output)
+        connect_thread = Thread(target=connect(device=switch_var.get(),username=username_var.get(), password=password_var.get(), command="sh cdp ne detail\n"))
         connect_thread.start()
         connect_thread.join()
         device_entry = re.split(r"[-]{9,}\n")
         
-
     thread = Thread(target=cdp_connect)
     thread.start()
     thread.join()
@@ -312,11 +366,12 @@ def cdp_neighbor():
         ip_address = re.findall(r"IP address:\s+([\d.]+)\s+",device)
         interface = re.findall(r"Interface:\s+([^,]+)",device)
         for device_name, ip_address, interface in zip(device_name, ip_address, interface):
-                print("Device Name:", device_name.strip().split(".")[0])
-                print("Platform:", platform.strip())
-                print("IP Address:", ip_address.strip())
-                print("Interface:", interface.strip())
-                print()
+            print("Device Name:", device_name.strip().split(".")[0])
+            print("Platform:", platform.strip())
+            print("IP Address:", ip_address.strip())
+            print("Interface:", interface.strip())
+            print()
+
 
 def file_creation():
     file_content = ""
@@ -337,8 +392,8 @@ interface vlan {vlan_number}
 description {vlan_description}
 ip access-group vlan-multi:110:in-default in
 ip verify unicast source reachable-via rx allow-default allow-self-ping
-ip helper-address  {primary_dhcp}
-ip helper-address  {secondary_dhcp}
+ip helper-address {dhcp_servers[primary_dhcp]}
+ip helper-address {dhcp_servers[secondary_dhcp]}
 no ip redirect
 no ip unreachables
 no ip proxy-arp
@@ -369,6 +424,18 @@ end
         with open(file_name, "w") as file:
             file.write(file_content)
             messagebox.showinfo(title="Completed", message=(f'Change {change_number_var.get()}.txt has been created.'))
+            os_name = platform.system()
+            if os_name == 'Windows':
+                # Open the file with its default application on Windows
+                os.startfile(file_name)
+            elif os_name == 'Darwin':
+                # Open the file with its default application on macOS
+                os.system(f'open {file_name}')
+            elif os_name == 'Linux':
+                # Open the file with its default application on Linux
+                os.system(f'xdg-open {file_name}')
+            else:
+                print("Unsupported operating system.")
 def trunking(router,end_device):
     if router not in routers:
         messagebox.showerror('Router Not Found','Supplied router was not found in the database. Please add the router and re-run the script.\n Or contact John to update the script.')
