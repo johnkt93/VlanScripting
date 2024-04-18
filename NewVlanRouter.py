@@ -25,7 +25,9 @@ routers = ["comm540-dist-aca01",
            "cumm024-dist-aca04",
            "cumm111-dist-aca01",
            "cumm111-dist-aca02",
-           "cumm111-dist-aca03"
+           "cumm111-dist-aca03",
+           "mary008-dist-res01",
+           "mary008-dist-res02"
           ]
 
 dhcp_servers = {
