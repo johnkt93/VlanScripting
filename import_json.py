@@ -69,3 +69,18 @@ def update_switch(switch, device_type="", ip_address="", mac_address="", cdp_nei
 
     with open("switch_db.json", "w") as write_file:
         json.dump(data, write_file, indent=4, sort_keys=True)
+
+# Reads from the bounce_ports json file to find the list of switches, and the ports to bounce.
+# TODO: Do more error-checking, i.e. if the lists are empty, if the requests don't make sense.
+def bounce_ports(switch: str, port: str):
+    try:
+        with open("Bounce_Ports.json", "r") as read_file:
+            data = json.load(read_file)
+            pass
+    except Exception as e:
+        try:
+            with open ("crash_dump.txt", "w") as write_file:
+                json.dump(e, write_file)
+        except:
+            print(e)
+            exit()

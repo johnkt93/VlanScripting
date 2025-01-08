@@ -6,10 +6,22 @@ import os
 import select
 from getpass import getpass
 from io import StringIO
+from configparser import ConfigParser, SectionProxy
+
+class Auth:
+    settings: SectionProxy
+    def __init__(self, config: SectionProxy):
+        self.settings = config
+        self.user = self.settings.get('username')
+        self.tacacs = self.settings.get('tacacs')
+        self.alt_passwords = self.settings.get('alt_passwords').split(',')
+
+config = ConfigParser()
+config.read('config.cfg')
 
 output = ""
 
-def connect(device,username,password,command=None):
+def connect(device,user,tacacs,command=None):
     jumpbox = paramiko.SSHClient()
     #If the host key does not exist in our system, we will add it
     #By default this is set to deny
@@ -18,8 +30,8 @@ def connect(device,username,password,command=None):
     ip_address = "nsg-jump-pr01"
     #Start the SSH connection, with the provided paramaters
     try:
-        jumpbox.connect(hostname=ip_address, username=username, password=password)
-        print(f'Logging in as {username} on {ip_address}')
+        jumpbox.connect(hostname=ip_address, username=user, password=tacacs)
+        print(f'Logging in as {user} on {ip_address}')
 
     except Exception as e:
         sys.stdout.write(str(e))
@@ -35,7 +47,7 @@ def connect(device,username,password,command=None):
     try:
         dest_addr = (device, 22)
         jumpbox_channel = jumpbox_transport.open_channel("direct-tcpip", dest_addr, src_addr)
-        target.connect(hostname=device,username=username, password=password, sock=jumpbox_channel)
+        target.connect(hostname=device,username=user, password=tacacs, sock=jumpbox_channel)
         print(f'Establishing a connection to {device}')
         if command is not None:
             stdin, stdout, stderr = target.exec_command(command=command)
