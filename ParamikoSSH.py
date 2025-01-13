@@ -21,7 +21,12 @@ config.read('config.cfg')
 
 output = ""
 
-def connect(device,user,tacacs,command=None):
+def connect(device, command=None):
+    #Instantiate the Auth class to pull data from the config file
+    auth = Auth(config['JumpBox'])
+    user = auth.user
+    tacacs = auth.tacacs
+
     jumpbox = paramiko.SSHClient()
     #If the host key does not exist in our system, we will add it
     #By default this is set to deny

@@ -72,10 +72,15 @@ def update_switch(switch, device_type="", ip_address="", mac_address="", cdp_nei
 
 # Reads from the bounce_ports json file to find the list of switches, and the ports to bounce.
 # TODO: Do more error-checking, i.e. if the lists are empty, if the requests don't make sense.
-def bounce_ports(switch: str, port: str):
+def bounce_ports():
     try:
         with open("Bounce_Ports.json", "r") as read_file:
             data = json.load(read_file)
+            for key, value in data.items():
+                key = data.keys()
+                value = data.values()
+                return key, value
+            print(key,value)
             pass
     except Exception as e:
         try:
