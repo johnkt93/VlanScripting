@@ -25,7 +25,7 @@ config.read('config.cfg')
 
 outputs= ''
 
-async def connect(device, commands):
+async def connect(device, commands: list):
     #Creating an empty command list, that will update from the arguments provided
     command_list = []
     command_list.append(commands)
@@ -47,8 +47,11 @@ async def connect(device, commands):
         logging.info(f'Logging in as {user} on {ip_address}')
 
     except Exception as e:
-        sys.stdout.write(str(e))
-        sys.exit()
+        if e == EOFError:
+            pass
+        else:
+            sys.stdout.write(str(e))
+            sys.exit()
 
     #Now that a connection has been established with our jumpbox,
     #we need to get that transport socket and establish a new channel
