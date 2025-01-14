@@ -4,9 +4,13 @@ import paramiko
 import sys
 import os
 import select
+import asyncio
+import logging
 from getpass import getpass
 from io import StringIO
 from configparser import ConfigParser, SectionProxy
+
+logging.basicConfig(level=logging.INFO)
 
 class Auth:
     settings: SectionProxy
@@ -19,9 +23,13 @@ class Auth:
 config = ConfigParser()
 config.read('config.cfg')
 
-output = ""
+outputs= ''
 
-def connect(device, command=None):
+async def connect(device, commands):
+    #Creating an empty command list, that will update from the arguments provided
+    command_list = []
+    command_list.append(commands)
+
     #Instantiate the Auth class to pull data from the config file
     auth = Auth(config['JumpBox'])
     user = auth.user
@@ -36,7 +44,7 @@ def connect(device, command=None):
     #Start the SSH connection, with the provided paramaters
     try:
         jumpbox.connect(hostname=ip_address, username=user, password=tacacs)
-        print(f'Logging in as {user} on {ip_address}')
+        logging.info(f'Logging in as {user} on {ip_address}')
 
     except Exception as e:
         sys.stdout.write(str(e))
@@ -53,15 +61,20 @@ def connect(device, command=None):
         dest_addr = (device, 22)
         jumpbox_channel = jumpbox_transport.open_channel("direct-tcpip", dest_addr, src_addr)
         target.connect(hostname=device,username=user, password=tacacs, sock=jumpbox_channel)
-        print(f'Establishing a connection to {device}')
-        if command is not None:
-            stdin, stdout, stderr = target.exec_command(command=command)
-            output = stdout.readlines()
-            errors = stderr.readlines()
-        return output
+        await asyncio.sleep(.1)
+        logging.info(f'Establishing a connection to {device}')
+        for command in command_list:
+            if command is not None:
+                await asyncio.sleep(.1)
+                logging.info(f"Running command: {command}")
+                stdin, stdout, stderr = target.exec_command(command)
+                output = await asyncio.to_thread(stdout.read)
+                error = await asyncio.to_thread(stderr.read)
+                outputs = output.decode().split('\r\n')
+                return outputs
 
     except Exception as e:
-        print("An error has occured during the connection process")
+        logging.info("An error has occured during the connection process")
         sys.stdout.write(str(e))
     finally:
         sys.stdout = sys.__stdout__
