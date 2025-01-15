@@ -25,11 +25,8 @@ config.read('config.cfg')
 
 outputs= ''
 
-async def connect(device, commands: list):
-    #Creating an empty command list, that will update from the arguments provided
-    command_list = []
-    command_list.append(commands)
-
+#logging.getLogger("paramiko").setLevel(logging.DEBUG)
+async def connect(device, *commands):
     #Instantiate the Auth class to pull data from the config file
     auth = Auth(config['JumpBox'])
     user = auth.user
@@ -50,6 +47,7 @@ async def connect(device, commands: list):
         if e == EOFError:
             pass
         else:
+            logging.error(f"An error occurred during the connection process: {e}", exc_info=True)
             sys.stdout.write(str(e))
             sys.exit()
 
@@ -57,28 +55,28 @@ async def connect(device, commands: list):
     #we need to get that transport socket and establish a new channel
     jumpbox_transport = jumpbox.get_transport()
     src_addr = (ip_address, 22)
-
     target=paramiko.SSHClient()
     target.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     try:
-        dest_addr = (device, 22)
-        jumpbox_channel = jumpbox_transport.open_channel("direct-tcpip", dest_addr, src_addr)
-        target.connect(hostname=device,username=user, password=tacacs, sock=jumpbox_channel)
-        await asyncio.sleep(.1)
-        logging.info(f'Establishing a connection to {device}')
-        for command in command_list:
-            if command is not None:
-                await asyncio.sleep(.1)
-                logging.info(f"Running command: {command}")
-                stdin, stdout, stderr = target.exec_command(command)
-                output = await asyncio.to_thread(stdout.read)
-                error = await asyncio.to_thread(stderr.read)
-                outputs = output.decode().split('\r\n')
-                return outputs
-
+        outputs = []
+        for command in commands:
+            dest_addr = (device, 22)
+            jumpbox_channel = jumpbox_transport.open_channel("direct-tcpip", dest_addr, src_addr)
+            target.connect(hostname=device,username=user, password=tacacs, sock=jumpbox_channel)
+            logging.info(f'Establishing a connection to {device}')
+            logging.info(f"Running command: {command}")
+            logging.info(command)
+            stdin, stdout, stderr = target.exec_command(command, get_pty=True)
+            output = await asyncio.to_thread(stdout.read)
+            error = await asyncio.to_thread(stderr.read)
+            logging.info(output.decode())
+        return outputs
     except Exception as e:
-        logging.info("An error has occured during the connection process")
-        sys.stdout.write(str(e))
+        if e == EOFError:
+            pass
+        else:
+            logging.info("An error has occured during the connection process")
+            sys.stdout.write(str(e))
     finally:
         sys.stdout = sys.__stdout__
         target.close()
