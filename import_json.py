@@ -3,7 +3,7 @@ import logging.config
 import os
 import logging
 
-logging.config(level=logging.INFO)
+logging.basicConfig(level=logging.INFO)
 
 def switch_db():
     if not os.path.exists("switch_db.json"):
