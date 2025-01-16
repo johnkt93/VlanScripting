@@ -1,5 +1,9 @@
 import json
+import logging.config
 import os
+import logging
+
+logging.config(level=logging.INFO)
 
 def switch_db():
     if not os.path.exists("switch_db.json"):
@@ -80,7 +84,7 @@ def bounce_ports():
                 key = data.keys()
                 value = data.values()
                 return key, value
-            print(key,value)
+            logging.info(key,value)
             pass
     except Exception as e:
         try:

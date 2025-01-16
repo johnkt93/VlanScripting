@@ -1,9 +1,9 @@
 from import_json import *
 from ParamikoSSH import *
 import asyncio
+import logging
 
-
-
+logging.basicConfig(level=logging.INFO)
 
 reformat = {
 "Switch1": {
@@ -19,6 +19,7 @@ async def main():
     # Assumes either x/y/z format, or x/y format for ports
     try:
         bounce_ports()
+        
     finally:
         with open("Bounce_Ports.json", "w") as write_file:
             json.dump(reformat, write_file, indent=4)
