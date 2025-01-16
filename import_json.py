@@ -88,4 +88,3 @@ def bounce_ports():
                 json.dump(e, write_file)
         except:
             print(e)
-            exit()

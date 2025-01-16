@@ -1,6 +1,8 @@
 {
     "Switch1": {
-        "Ports":[]},
+        "Ports": []
+    },
     "Switch2": {
-        "Ports": []}
+        "Ports": []
+    }
 }

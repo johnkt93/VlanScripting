@@ -5,14 +5,12 @@ import asyncio
 
 
 
-reformat = '''
-{
+reformat = {
 "Switch1": {
     "Ports":[]},
 "Switch2": {
     "Ports": []}
 }
-'''
 
 commands = []
 
@@ -23,10 +21,4 @@ async def main():
         bounce_ports()
     finally:
         with open("Bounce_Ports.json", "w") as write_file:
-            json.dump(reformat, write_file)
-    exit()
-
-if __name__ == "__main__":
-    asyncio.run(main())
-else:
-    await main()
+            json.dump(reformat, write_file, indent=4)
