@@ -80,15 +80,14 @@ def bounce_ports():
     try:
         with open("Bounce_Ports.json", "r") as read_file:
             data = json.load(read_file)
-            for key, value in data.items():
-                key = data.keys()
-                value = data.values()
-                return key, value
-            logging.info(key,value)
-            pass
+            return data
+            #for key, value in data.items():
+            #    key = data.keys()
+            #    value = data.values()
+            #    return key, value
     except Exception as e:
         try:
-            with open ("crash_dump.txt", "w") as write_file:
+            with open("crash_dump.txt", "w") as write_file:
                 json.dump(e, write_file)
         except:
             print(e)
