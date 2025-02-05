@@ -47,8 +47,7 @@ async def main():
                 for x in port:
                     for y in x:
                         logging.info(f'This is port {y} on switch: {switch}')
-                        #await connect(switch, True, 5, f'conf t', f'int {device_ports}{y}\nshut','no shut\nend', f'show mac address-table int {device_ports}{y}', f'show ip dhcp snooping bind int {device_ports}{y}')
-                        await connect(switch, True, 5, f'show mac address-table int {device_ports}{y}', f'show ip dhcp snooping bind int {device_ports}{y}')
+                        await connect(switch, True, 5, f'conf t', f'int {device_ports}{y}\nshut','no shut\nend', f'show mac address-table int {device_ports}{y}', f'show ip dhcp snooping bind int {device_ports}{y}')
                         
     except Exception as e:
         logging.info(e)
