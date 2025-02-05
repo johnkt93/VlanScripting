@@ -76,5 +76,3 @@ async def main():
                     subprocess.run([opener, f"bounce_ports_output_{n}.txt"])
         with open("Bounce_Ports.json", "w") as write_file:
             json.dump(reformat, write_file, indent=4) #reset the bounce_ports json, so it can be reused
-
-await main()
