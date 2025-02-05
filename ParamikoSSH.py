@@ -23,10 +23,10 @@ class Auth:
 config = ConfigParser()
 config.read('config.cfg')
 
-outputs= ''
+outputs= []
 
 #logging.getLogger("paramiko").setLevel(logging.DEBUG)
-async def connect(device, *commands):
+async def connect(device, through_shell: bool, *commands):
     #Instantiate the Auth class to pull data from the config file
     auth = Auth(config['JumpBox'])
     user = auth.user
@@ -41,6 +41,7 @@ async def connect(device, *commands):
     #Start the SSH connection, with the provided paramaters
     try:
         jumpbox.connect(hostname=ip_address, username=user, password=tacacs)
+        jumpbox.invoke_shell()
         logging.info(f'Logging in as {user} on {ip_address}')
 
     except Exception as e:
@@ -58,18 +59,31 @@ async def connect(device, *commands):
     target=paramiko.SSHClient()
     target.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     try:
-        outputs = []
+        #outputs = []
+        dest_addr = (device, 22)
+        jumpbox_channel = jumpbox_transport.open_channel("direct-tcpip", dest_addr, src_addr)#.get_pty()
+        target.connect(hostname=device,username=user, password=tacacs, sock=jumpbox_channel)
+        if through_shell == True:
+            chan = target.invoke_shell()
+        else:
+            pass
+        logging.info(f'Establishing a connection to {device}')
         for command in commands:
-            dest_addr = (device, 22)
-            jumpbox_channel = jumpbox_transport.open_channel("direct-tcpip", dest_addr, src_addr)
-            target.connect(hostname=device,username=user, password=tacacs, sock=jumpbox_channel)
-            logging.info(f'Establishing a connection to {device}')
-            logging.info(f"Running command: {command}")
-            logging.info(command)
-            stdin, stdout, stderr = target.exec_command(command, get_pty=True)
-            output = await asyncio.to_thread(stdout.read)
-            error = await asyncio.to_thread(stderr.read)
-            logging.info(output.decode())
+            if through_shell == True:
+                logging.info(f"Running command: {command}, through shell")
+                chan.send(command + '\r')
+                await asyncio.sleep(1)
+                while chan.recv_ready():
+                    output = chan.recv(1024).decode('utf-8')
+                    outputs.append(output)
+                    logging.info(output)
+            else:
+                logging.info(f"Running command: {command}, through exec channel")
+                stdin, stdout, stderr = target.exec_command(command)
+                output = await asyncio.to_thread(stdout.read().decode('utf-8'))
+                error = await asyncio.to_thread(stderr.read().decode('utf-8'))
+                outputs.append(output.decode())
+                logging.info(output.decode())
         return outputs
     except Exception as e:
         if e == EOFError:
