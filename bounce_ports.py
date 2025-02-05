@@ -28,7 +28,7 @@ async def main():
                 for x in port:
                     for y in x:
                         logging.info(f'This is port {y} on switch: {switch}')
-                        await connect(switch, True, 5, f'conf t', f'int {device_ports}{y}\nshut','no shut', f'show mac address-table int {device_ports}{y}', f'show ip dhcp snooping bind int {device_ports}{y}')
+                        await connect(switch, True, 5, f'conf t', f'int {device_ports}{y}\nshut','no shut\nend', f'show mac address-table int {device_ports}{y}', f'show ip dhcp snooping bind int {device_ports}{y}')
     except Exception as e:
         logging.info(e)
     finally:
@@ -54,7 +54,7 @@ async def main():
                 elif os.name == "posix":
                     opener = "open" if "darwin" in os.sys.platform else "xdg-open"
                     subprocess.run([opener, f"bounce_ports_output_{n}.txt"])
-    #    with open("Bounce_Ports.json", "w") as write_file:
-    #        json.dump(reformat, write_file, indent=4) #reset the bounce_ports json, so it can be reused
+        with open("Bounce_Ports.json", "w") as write_file:
+            json.dump(reformat, write_file, indent=4) #reset the bounce_ports json, so it can be reused
 
 await main()
