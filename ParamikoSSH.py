@@ -26,7 +26,7 @@ config.read('config.cfg')
 outputs= []
 
 #logging.getLogger("paramiko").setLevel(logging.DEBUG)
-async def connect(device, through_shell: bool, *commands):
+async def connect(device, through_shell: bool, timeout: int, *commands):
     #Instantiate the Auth class to pull data from the config file
     auth = Auth(config['JumpBox'])
     user = auth.user
@@ -72,7 +72,7 @@ async def connect(device, through_shell: bool, *commands):
             if through_shell == True:
                 logging.info(f"Running command: {command}, through shell")
                 chan.send(command + '\r')
-                await asyncio.sleep(1)
+                await asyncio.sleep(timeout) #Wait after sending the command
                 while chan.recv_ready():
                     output = chan.recv(1024).decode('utf-8')
                     outputs.append(output)
@@ -80,9 +80,9 @@ async def connect(device, through_shell: bool, *commands):
             else:
                 logging.info(f"Running command: {command}, through exec channel")
                 stdin, stdout, stderr = target.exec_command(command)
-                output = await asyncio.to_thread(stdout.read().decode('utf-8'))
-                error = await asyncio.to_thread(stderr.read().decode('utf-8'))
-                outputs.append(output.decode())
+                output = await asyncio.to_thread(stdout.read)
+                error = await asyncio.to_thread(stderr.read)
+                outputs.append(f'{device}#' + command + '\n' + output.decode())
                 logging.info(output.decode())
         return outputs
     except Exception as e:

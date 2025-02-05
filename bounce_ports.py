@@ -11,23 +11,24 @@ reformat = [
     {'Switch1':{
         'Ports':[]}}
     ]
+
+device_ports = 'Te1/0/'
+
 commands = []
 async def main():
-    # Tries to connect to the ports with descending order of importance TenGig->Gig->FastEther
-    # Assumes either x/y/z format, or x/y format for ports
     try:
         data=bounce_ports()
         for switches in data:
             switch_dict = switches.keys()
             for switch in switch_dict:
                 #logging.info(switch)
-                await connect(switch, False, 'show int desc')
+                await connect(switch, False, 1, 'show ver')
             for ports in switches.values():
                 port = ports.values()
                 for x in port:
                     for y in x:
                         logging.info(f'This is port {y} on switch: {switch}')
-                        await connect(switch, True, f'show run int Gi1/0/{y}',f'show int gi1/0/{y}')
+                        await connect(switch, True, 5, f'conf t', f'int {device_ports}{y}\nshut','no shut', f'show mac address-table int {device_ports}{y}', f'show ip dhcp snooping bind int {device_ports}{y}')
     except Exception as e:
         logging.info(e)
     finally:
@@ -37,9 +38,7 @@ async def main():
             if not os.path.exists(f"bounce_ports_output_{n}.txt"):
                 with open(f"bounce_ports_output_{n}.txt", 'a') as write_file:
                     for line in outputs:
-                        line=line.strip()
-                        if line:
-                            write_file.write(f'{line}')# Initialize the file
+                        write_file.write(f'{line}')# Initialize the file
                     if os.name == "nt":
                         os.startfile(f"bounce_ports_output_{n}.txt")
                     elif os.name == "posix":
@@ -49,9 +48,7 @@ async def main():
         else:
             with open(f"bounce_ports_output_{n}.txt", 'a') as write_file:
                 for line in outputs:
-                    line=line.strip()
-                    if line:
-                        write_file.write(f'{line}')# Initialize the file
+                    write_file.write(f'{line}')# Initialize the file
                 if os.name == "nt":
                     os.startfile(f"bounce_ports_output_{n}.txt")
                 elif os.name == "posix":
