@@ -2,12 +2,8 @@
 #Documentation: https://docs.paramiko.org/en/stable/api/client.html
 import paramiko
 import sys
-import os
-import select
 import asyncio
 import logging
-from getpass import getpass
-from io import StringIO
 from configparser import ConfigParser, SectionProxy
 
 logging.basicConfig(level=logging.INFO)
