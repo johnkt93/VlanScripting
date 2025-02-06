@@ -9,8 +9,8 @@ import re
 logging.basicConfig(level=logging.INFO)
 
 reformat = [
-    {'Switch1':{
-        'Ports':[]}}
+    {"Switch1":{
+        "Ports":[]}}
     ]
 
 commands = []
