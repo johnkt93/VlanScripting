@@ -5,7 +5,7 @@ https://www.python.org/downloads/
 1.Install python to your local machine, and ensure that you are running the minimum code version (3.11.1 at the time of writing this)
 2.Install paramiko to your local machine
 (pip install paramiko)
-3.a. Run the local executable
+3.a. Run the local executable #Doesn't exist currently
   b. Alternatively, run the source code directly "py bounce_ports.py"
 
 Mass Bounce Ports:
